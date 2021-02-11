@@ -1,60 +1,30 @@
 #pragma once
 #include "dbghelp.h"
 
-struct Errors
+//Prints errors to console or saves them for later
+struct Debug
 {
-	/*Errors& operator>>(std::string& message)
-	{
-		message = messages.pop_front();
-		return *this;
+	static inline std::string GetNextMessage() 
+	{ 
+		if(!messages.empty())
+			return messages.pop_front(); 
 	}
 
-	Errors& operator<<(const std::string& message)
-	{
-		messages.push_back(message);
-		return *this;
+	static inline bool GetNextMessage(std::string& buffer) 
+	{ 
+		if (messages.empty())
+			return false;
+		buffer = messages.pop_front(); 
+		return true;
 	}
 
-	Errors& operator<<(const char* message)
-	{
-		messages.emplace_back((const char*&&)message, strlen(message));
-		return *this;
-	}*/
-
-	static Errors& Error(const char* message)
-	{
-		if (useConsole)
-		{
-			std::cout << message;
-		}
-		else
-		{
-			messages.emplace_back((const char*&&)message, strlen(message));
-		}
-
-		return errorsContainer;
-	}
-
-	static Errors& Error(const std::string& message)
-	{
-		if (useConsole)
-		{
-			std::cout << message;
-		}
-		else
-		{
-			messages.push_back(message);
-		}
-
-		return errorsContainer;
-	}
-
+	//If console is used prints message else adds it to the queue
 	template <typename DataT>
-	static Errors& Error(const DataT& data)
+	static Debug& Message(const DataT& data)
 	{
 		if (useConsole)
 		{
-			std::cout << data;
+			std::cout << '\n' << data;
 			return errorsContainer;
 		}
 		std::stringstream ss;
@@ -63,8 +33,9 @@ struct Errors
 		return errorsContainer;
 	}
 
+	//If console is used prints message else adds it to the last message
 	template <typename DataT>
-	Errors& Add(const DataT& data)
+	Debug& Add(const DataT& data)
 	{
 		if (useConsole)
 		{
@@ -72,27 +43,27 @@ struct Errors
 			return *this;
 		}
 		std::stringstream ss;
-		ss << messages.back();
+		ss << messages.pop_back();
 		ss << data;
+		messages.push_back(ss.str());
 		return *this;
 	}
 
-	//static inline Errors* GetErrorsContainer() { return &errorsContainer; }
-
+	//Does the application use console?
 	static inline bool UseConsole() { return useConsole; }
 private:
-	Errors()
+	Debug()
 	{
-		useConsole = (ImageNtHeader(PVOID(GetModuleHandle(NULL)))->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI);
+		useConsole = (ImageNtHeader(PVOID(GetModuleHandleA(NULL)))->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI);
 	}
 
 	static tsque<std::string> messages;
 
 	static bool useConsole;
 
-	static Errors errorsContainer;
+	static Debug errorsContainer;
 };
 
-tsque<std::string>	Errors::messages;
-Errors				Errors::errorsContainer;
-bool				Errors::useConsole;
+tsque<std::string>	Debug::messages;
+Debug				Debug::errorsContainer;
+bool				Debug::useConsole;

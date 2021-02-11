@@ -1,5 +1,7 @@
 #pragma once
 
+//Message will have type, which defines how it will be handled
+//T is enum with messages types
 template <typename T>
 class Message
 {
@@ -24,8 +26,8 @@ public:
 
 	void Write(const void* source, size_t size)
 	{
-		data.resize(data.size() + size);
-		memcpy(data.data() + header.size, source, size);
+		body.resize(body.size() + size);
+		memcpy(body.data() + header.size, source, size);
 		header.size += size;
 	}
 
@@ -33,7 +35,7 @@ public:
 	{
 		size_t size_to_read = (size >= header.size ? header.size : size);
 
-		memcpy(buffer, data.data() + data.size() - size_to_read, size_to_read);
+		memcpy(buffer, body.data() + body.size() - size_to_read, size_to_read);
 
 		return size_to_read;
 	}
@@ -54,7 +56,7 @@ public:
 	{
 		size = Read(buffer, size);
 
-		data.resize(data.size() - size);
+		body.resize(body.size() - size);
 
 		header.size -= size;
 
@@ -74,7 +76,7 @@ public:
 	}
 
 	Header header;
-	std::vector<uint8_t> data;
+	std::vector<uint8_t> body;
 };
 
 
@@ -83,9 +85,9 @@ Message<T>& operator<<(Message<T>& message, const DataT& data)
 {
 	static_assert(std::is_standard_layout<DataT>(), "Not standart layout");
 
-	message.data.resize(message.data.size() + sizeof(data));
+	message.body.resize(message.body.size() + sizeof(data));
 
-	memcpy(message.data.data() + message.data.size() - sizeof(data), &data, sizeof(data));
+	memcpy(message.body.data() + message.body.size() - sizeof(data), &data, sizeof(data));
 
 	message.header.size += sizeof(data);
 
@@ -95,9 +97,9 @@ Message<T>& operator<<(Message<T>& message, const DataT& data)
 template <typename T>
 Message<T>& operator<<(Message<T>& message, const char* data)
 {
-	message.data.resize(message.data.size() + strlen(data) + 1);
+	message.body.resize(message.body.size() + strlen(data) + 1);
 
-	memcpy(message.data.data() + message.data.size() - strlen(data) - 1, data, strlen(data) + 1);
+	memcpy(message.body.data() + message.body.size() - strlen(data) - 1, data, strlen(data) + 1);
 
 	message.header.size += strlen(data) + 1;
 
@@ -110,9 +112,9 @@ Message<T>& operator<<(Message<T>& message, const DataT&& data)
 	static_assert(std::is_standard_layout<DataT>(), "Not standart layout");
 
 
-	message.data.resize(message.data.size() + sizeof(data));
+	message.body.resize(message.body.size() + sizeof(data));
 
-	memcpy(message.data.data() + message.data.size() - sizeof(data), &data, sizeof(data));
+	memcpy(message.body.data() + message.body.size() - sizeof(data), &data, sizeof(data));
 
 	message.header.size += sizeof(data);
 

@@ -4,21 +4,32 @@ template <typename T>
 class Connection : public std::enable_shared_from_this<Connection<T>>
 {
 public:
-	Connection(uint32_t id, asio::io_context& asio_context, asio::ip::tcp::socket socket, tsque<Sent_message<T>>& incoming_messages, std::function<void(uint32_t, Sent_message<T>&)> messages_handler)
-		:m_ID(id), m_context(asio_context), m_socket(std::move(socket)), m_inMsg(incoming_messages), m_handledMsg(T(0)), m_ownedByServer(true)
+	/// <summary>
+	/// Constructs connection used by server
+	/// </summary>
+	/// <param name="id">:					id of the connection in server</param>
+	/// <param name="asio_context">:		server's asio context</param>
+	/// <param name="socket">:				client's socket (where messages come from and are sent to)</param>
+	/// <param name="messages_handler">:	function that is called when the connection (thus server) receives a message</param>
+	Connection(uint32_t id, asio::io_context& asio_context, asio::ip::tcp::socket socket, std::function<void(uint32_t, Sent_message<T>&)> messages_handler)
+		:m_ID(id), m_context(asio_context), m_socket(std::move(socket)), m_handledMsg(T(0)), m_ownedByServer(true)
 	{
 		m_serverMsgHandler = messages_handler;
 	}
 	
-	Connection(asio::io_context& asio_context, asio::ip::tcp::socket socket, tsque<Sent_message<T>>& incomming_messages, std::function<void(Sent_message<T>&)> messages_handler)
-		:m_context(asio_context), m_socket(std::move(socket)), m_inMsg(incomming_messages), m_handledMsg(T(0)), m_ownedByServer(false)
+	/// <summary>
+	/// Constructs connection used by client
+	/// </summary>
+	/// <param name="asio_context">:		client's asio context</param>
+	/// <param name="socket">:				server's socket (where messages come from and are sent to)</param>
+	/// <param name="messages_handler">:	function that is called when the connection (thus client) receives a message</param>
+	Connection(asio::io_context& asio_context, asio::ip::tcp::socket socket, std::function<void(Sent_message<T>&)> messages_handler)
+		:m_context(asio_context), m_socket(std::move(socket)), m_handledMsg(T(0)), m_ownedByServer(false)
 	{
 		m_clientMsgHandler = messages_handler;
 	}
 
 	inline bool IsConnected() const { return m_socket.is_open(); }
-
-
 
 	void ConnectToClient()
 	{
@@ -26,6 +37,7 @@ public:
 		{
 			if (IsConnected())
 			{
+				//Basically server just starts to wait for messages
 				ReadID();
 			}
 		}
@@ -40,12 +52,12 @@ public:
 				{
 					if (!ec)
 					{
-						std::cout << "Connected to server\n";
+						Debug::Message("Connected to server");
 						ReadID();
 					}
 					else
 					{
-						std::cout << "Error " << ec << " occured while trying to connect client to " << endpoint << std::endl;
+						Debug::Message("Error occured while trying to connect to server").Add(": ").Add(ec.message());
 					}
 				});
 
@@ -54,7 +66,7 @@ public:
 
 	void Disconnect()
 	{
-		std::cout << "Disconnected\n";
+		Debug::Message("Disconnected");
 		if(IsConnected())
 			asio::post(m_context, [this]() { m_socket.close(); });
 	}
@@ -80,7 +92,7 @@ private:
 			{
 				if (ec)
 				{
-					std::cout << "Error occured while trying to read ID: " << ec.message() << "\n";
+					Debug::Message("Error occured while trying to read ID: ").Add(ec.message());
 					m_socket.close();
 				}
 				else
@@ -97,14 +109,14 @@ private:
 			{
 				if (ec)
 				{
-					std::cout << "Error occured while trying to read header: "<<ec.message()<<"\n";
+					Debug::Message("Error occured while trying to read header: ").Add(ec.message());
 					m_socket.close();
 				}
 				else
 				{
 					if (m_handledMsg.message.header.size)
 					{
-						m_handledMsg.message.data.resize(m_handledMsg.message.header.size);
+						m_handledMsg.message.body.resize(m_handledMsg.message.header.size);
 						ReadBody();
 					}
 					else
@@ -118,12 +130,12 @@ private:
 
 	void ReadBody()
 	{
-		asio::async_read(m_socket, asio::buffer(m_handledMsg.message.data.data(), m_handledMsg.message.data.size()),
+		asio::async_read(m_socket, asio::buffer(m_handledMsg.message.body.data(), m_handledMsg.message.body.size()),
 			[this](asio::error_code ec, size_t size)
 			{
 				if (ec)
 				{
-					std::cout << "Error occured while trying to read body: " << ec.message() << "\n";
+					Debug::Message("Error occured while trying to read body: ").Add(ec.message());
 					m_socket.close();
 				}
 				else
@@ -141,7 +153,7 @@ private:
 			{
 				if (ec)
 				{
-					std::cout << "Error occured while trying to write header: " << ec.message() << "\n";
+					Debug::Message("Error occured while trying to write ID: ").Add(ec.message());
 					m_socket.close();
 				}
 				else
@@ -158,12 +170,12 @@ private:
 			{
 				if (ec)
 				{
-					std::cout << "Error occured while trying to write header: " << ec.message() << "\n";
+					Debug::Message("Error occured while trying to write header: ").Add(ec.message());
 					m_socket.close();
 				}
 				else
 				{
-					if (m_outMsg.front().message.data.size())
+					if (m_outMsg.front().message.body.size())
 					{
 						WriteBody();
 					}
@@ -177,14 +189,14 @@ private:
 
 	void WriteBody()
 	{
-		if (m_outMsg.front().message.data.size() != m_outMsg.front().message.header.size)
-			std::cout << "Not fine\n";
-		asio::async_write(m_socket, asio::buffer(m_outMsg.front().message.data.data(), m_outMsg.front().message.header.size),
+		if (m_outMsg.front().message.body.size() != m_outMsg.front().message.header.size)
+			Debug::Message("Size mismatch");
+		asio::async_write(m_socket, asio::buffer(m_outMsg.front().message.body.data(), m_outMsg.front().message.header.size),
 			[this](asio::error_code ec, size_t size)
 			{
 				if (ec)
 				{
-					std::cout << "Error occured while trying to write body: " << ec.message() << "\n";
+					Debug::Message("Error occured while trying to write body: ").Add(ec.message());
 					m_socket.close();
 				}
 				else
@@ -216,16 +228,17 @@ private:
 	}
 
 public:
+	const uint32_t				m_ID = -1;
+
+private:
 	const bool					m_ownedByServer = true;
 
 	asio::ip::tcp::socket		m_socket;
 	asio::io_context&			m_context;
 
 	tsque<Sent_message<T>>		m_outMsg;
-	tsque<Sent_message<T>>&		m_inMsg;
+	//tsque<Sent_message<T>>&		m_inMsg;
 	Sent_message<T>				m_handledMsg;
-
-	uint32_t					m_ID;
 
 	std::function<void(uint32_t, Sent_message<T>&)> m_serverMsgHandler;
 

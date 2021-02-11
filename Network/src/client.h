@@ -13,7 +13,7 @@ protected:
 	{
 		Disconnect();
 
-		std::cout << "Client destructed\n";
+		Debug::Message("Client destructed");
 	}
 
 public:
@@ -32,9 +32,9 @@ public:
 			asio::ip::tcp::resolver resolver(m_context);
 			asio::ip::tcp::resolver::results_type endpoints = resolver.resolve(host, std::to_string(port));
 
-			std::cout << "Try to connect to " << host << ": " << std::to_string(port) << "...\n";
+			Debug::Message("Try to connect to ").Add(host).Add(":").Add(std::to_string(port)).Add("...");
 
-			m_connection = std::make_unique<Connection<T>>(m_context, asio::ip::tcp::socket(m_context), m_inMsg, [this](Sent_message<T>& message) { OnMessageReceive(message.message, message.ID); });
+			m_connection = std::make_unique<Connection<T>>(m_context, asio::ip::tcp::socket(m_context), [this](Sent_message<T>& message) { OnMessageReceive(message.message, message.ID); });
 
 			m_connection->ConnectToServer(endpoints);
 
@@ -90,7 +90,7 @@ private:
 		if (IsConnected())
 			m_connection->Send(msg);
 		else
-			std::cout << "The client is not connected to server\n";
+			Debug::Message("The client is not connected to server");
 	}
 
 protected:

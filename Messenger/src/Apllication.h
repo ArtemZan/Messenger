@@ -13,14 +13,10 @@ private:
 
 	void Init(const char* title, size_t width, size_t height);
 
-	//bool ConnectToServer(const char* host, uint16_t port);
-
 	void Run();
 
 	void Shutdown();
 
-
-	void OnStart();
 	void OnUpdate(float dTime);
 
 	void OnWindowClose();
@@ -42,6 +38,7 @@ private:
 	int			m_width;
 	int			m_height;
 
-	std::string m_message;		 //TEMPORARY
-	uint32_t	m_senderId;		 //TEMPORARY
+	std::string					m_message;		 //TEMPORARY
+	uint32_t					m_senderId;		 //TEMPORARY
+	std::vector<std::string>	m_debugMessages;
 };

@@ -17,13 +17,13 @@ public:
 
 	bool OnClientConnect(const std::shared_ptr<Connection<MSG_TYPES>> client) override
 	{
-		Errors::Error("Client connected to my server\n");
+		Debug::Message("Client connected to my server\n");
 		return true;
 	}
 
 	void OnClientDisconnect(const std::shared_ptr<Connection<MSG_TYPES>> client) override
 	{
-		std::cout << "Client disconnected from my server\n";
+		Debug::Message("Client disconnected from my server");
 	}
 
 	void OnMessageRecieve(Message<MSG_TYPES>& msg, uint32_t sender_id) override
@@ -34,7 +34,7 @@ public:
 		{
 			char buf[100];
 			msg.Read(buf, msg.header.size);
-			std::cout << "My server recieved a message: " << buf << std::endl;
+			Debug::Message("My server recieved a message: ").Add(buf);
 			break;
 		}
 		default:
@@ -55,7 +55,7 @@ int main()
 		server.Update();
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		if (i == 700)
-			std::cout << "Server turns off in 30 seconds\n";
+			Debug::Message("Server turns off in 30 seconds");
 	}
 
 	server.Stop();

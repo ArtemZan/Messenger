@@ -2,67 +2,81 @@
 #include "Network.h"
 #include "Apllication.h"
 
+void FitImGuiText(const char* text)
+{
+}
+
 Application Application::Instance;
 
 
 Application::Application()
 	:m_title("Messenger"), m_width(960), m_height(540)
 {
-	std::cout << Errors::UseConsole();
-
-
 	Init(m_title, m_width, m_height);
 	Connect("127.0.0.1", 5500);
 	Run();
 }
 
-
-void Application::OnStart()
-{
-
-}
-
-
-//All in Application::OnUpdate will change, it is just for test 
+//many things will change here
 void Application::OnUpdate(float dTime)
 {
 	ImGuiIO& io = ImGui::GetIO();
 
-	ImGuiWindowFlags window_flags = 0;
-	window_flags |= ImGuiWindowFlags_NoMove;
-	window_flags |= ImGuiWindowFlags_NoResize;
-	window_flags |= ImGuiWindowFlags_NoCollapse;
-	window_flags |= ImGuiWindowFlags_NoTitleBar;
-	window_flags |= !ImGuiWindowFlags_MenuBar;
-
-	ImVec2 wp(0.0, 0.0);
-
-	ImGui::SetNextWindowPos(wp);
-	ImGui::SetNextWindowSize({ io.DisplaySize.x / 2.5f , io.DisplaySize.y});
-
-	ImGui::Begin(" ", 0, window_flags);
-
-	static char msg_text[100] = "Message";
-
-	ImGui::InputText("Message", msg_text, 100);
-
-	if (ImGui::Button("Send", { 50, 20 }))
 	{
-		Message<MSG_TYPES> msg(MSG_TYPES::TEXT);
-		msg.Write(msg_text, strlen(msg_text) + 1);
-		SendToServer(msg);
-		SendToAll(msg);
-		std::this_thread::sleep_for(std::chrono::seconds(1));
-	}
+		ImGuiWindowFlags window_flags = 0;
+		window_flags |= ImGuiWindowFlags_NoMove;
+		window_flags |= ImGuiWindowFlags_NoResize;
+		window_flags |= ImGuiWindowFlags_NoCollapse;
+		window_flags |= ImGuiWindowFlags_NoTitleBar;
+		window_flags |= !ImGuiWindowFlags_MenuBar;
 
-	if (!m_message.empty())
-	{
-		ImGui::Text("Message from %d: ", m_senderId);
-		ImGui::Text(m_message.c_str());
+		ImGui::SetNextWindowPos({0, 0});
+		ImGui::SetNextWindowSize({ io.DisplaySize.x / 2.5f , io.DisplaySize.y });
+
+		ImGui::Begin(" ", 0, window_flags);
+
+		static char msg_text[100] = "Message";
+
+		ImGui::InputText("Message", msg_text, 100);
+
+		if (ImGui::Button("Send", { 50, 20 }))
+		{
+			Message<MSG_TYPES> msg(MSG_TYPES::TEXT);
+			msg.Write(msg_text, strlen(msg_text) + 1);
+			SendToServer(msg);
+			SendToAll(msg);
+			std::this_thread::sleep_for(std::chrono::seconds(1));
+		}
+
+		if (!m_message.empty())
+		{
+			ImGui::Text("Message from %d: ", m_senderId);
+			ImGui::Text(m_message.c_str());
+		}
+
+
+		ImGui::End();
 	}
 	
+	{
+		std::string message;
+		while (Debug::GetNextMessage(message))
+		{
+			m_debugMessages.push_back(message);
+		}
+		ImGui::SetNextWindowPos({io.DisplaySize. x / 2.0f, 0.0f});
+		ImGui::SetNextWindowSize({ io.DisplaySize.x / 2.5f, io.DisplaySize.y / 2.0f });
+		ImGui::Begin("Debug");
+		for (const std::string& message : m_debugMessages)
+		{	
+			ImGui::PushStyleColor(0, { 1.0f, 1.0f, 0.3f, 1.0f });
+			ImGui::TextWrapped(message.c_str());
+			ImGui::PopStyleColor();
+		}
+		ImGui::End();
+	}
 
-	ImGui::End();
+	ImGui::ShowDemoWindow();
 }
 
 void Application::OnWindowClose()
@@ -167,13 +181,14 @@ void Application::Run()
 
 		OnUpdate(0);
 
-
 		ImGui::Render();
 
 		glClear(GL_COLOR_BUFFER_BIT);
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 		glfwSwapBuffers(m_window);
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 	}
 
 	Shutdown();
