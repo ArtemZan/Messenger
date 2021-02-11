@@ -24,6 +24,7 @@ public:
 	{
 	}
 
+	//Write data to message
 	void Write(const void* source, size_t size)
 	{
 		body.resize(body.size() + size);
@@ -31,6 +32,7 @@ public:
 		header.size += size;
 	}
 
+	//Read data from message
 	size_t Read(void* buffer, size_t size)
 	{
 		size_t size_to_read = (size >= header.size ? header.size : size);
@@ -40,18 +42,21 @@ public:
 		return size_to_read;
 	}
 
+	//Read data from message
 	template <typename T>
 	size_t Read(T* buffer)
 	{
 		return Read(buffer, sizeof(T));
 	}
 
+	//Read data from message
 	template <typename T>
 	size_t Read(T& buffer)
 	{
 		return Read(&buffer, sizeof(T));
 	}
 
+	//Read data from message and delete it from the message
 	size_t TakeData(void* buffer, size_t size)
 	{
 		size = Read(buffer, size);
@@ -63,20 +68,24 @@ public:
 		return size;
 	}
 
+	//Read data from message and delete it from the message
 	template <typename T>
 	size_t TakeData(T* buffer)
 	{
 		return TakeData(buffer, sizeof(T));
 	}
 
+	//Read data from message and delete it from the message
 	template <typename T>
 	size_t TakeData(T& buffer)
 	{
 		return TakeData(&buffer, sizeof(T));
 	}
 
-	Header header;
-	std::vector<uint8_t> body;
+	//Header keeps data abuot body
+	Header					header;
+	//Body keeps the message
+	std::vector<uint8_t>	body;
 };
 
 
@@ -85,14 +94,11 @@ Message<T>& operator<<(Message<T>& message, const DataT& data)
 {
 	static_assert(std::is_standard_layout<DataT>(), "Not standart layout");
 
-	message.body.resize(message.body.size() + sizeof(data));
-
-	memcpy(message.body.data() + message.body.size() - sizeof(data), &data, sizeof(data));
-
-	message.header.size += sizeof(data);
+	message.Write(&data, sizeof(DataT));
 
 	return message;
 }
+
 
 template <typename T>
 Message<T>& operator<<(Message<T>& message, const char* data)
@@ -106,7 +112,7 @@ Message<T>& operator<<(Message<T>& message, const char* data)
 	return message;
 }
 
-template <typename T, typename DataT>
+/*template <typename T, typename DataT>
 Message<T>& operator<<(Message<T>& message, const DataT&& data)
 {
 	static_assert(std::is_standard_layout<DataT>(), "Not standart layout");
@@ -119,7 +125,8 @@ Message<T>& operator<<(Message<T>& message, const DataT&& data)
 	message.header.size += sizeof(data);
 
 	return message;
-}
+}*/
+
 
 template <typename T, typename DataT>
 Message<T>& operator>>(Message<T>& message, DataT& buffer)
@@ -129,6 +136,8 @@ Message<T>& operator>>(Message<T>& message, DataT& buffer)
 	return message;
 }
 
+
+//Keeps message and the ID of sender or receiver
 template <typename T>
 struct Sent_message 
 {

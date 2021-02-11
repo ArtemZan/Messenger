@@ -1,5 +1,8 @@
 #pragma once
 
+//Class of thread-safe queue
+//One instance of tsque can be accessed by several threads simutaneously
+//This is achieved using std::mutex and std::scoped_lock
 template <typename T>
 class tsque
 {
@@ -13,6 +16,8 @@ public:
 
 	inline const T& front() const
 	{
+		//std::scoped_lock locks the queue until the function
+		//returns (same for other functions)
 		std::scoped_lock lock(m_mutex);
 		return m_deque.front();
 	}
@@ -36,14 +41,14 @@ public:
 	}
 
 	template <class... Valty>
-	inline void emplace_front(const Valty&&... val)
+	inline void emplace_front(const Valty... val)
 	{
 		std::scoped_lock lock(m_mutex);
 		m_deque.emplace_front(val...);
 	}
 
 	template <class... Valty>
-	inline void emplace_back(const Valty&&... val)
+	inline void emplace_back(const Valty... val)
 	{
 		std::scoped_lock lock(m_mutex);
 		m_deque.emplace_back(val...);
@@ -84,5 +89,7 @@ public:
 
 private:
 	mutable std::mutex		m_mutex;
-	std::deque<T>	m_deque;
+
+	//using std::deque makes accessing data from both sides easy
+	std::deque<T>			m_deque;
 };

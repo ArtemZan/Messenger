@@ -17,7 +17,11 @@ private:
 
 	void Shutdown();
 
+	//Called once per frame
 	void OnUpdate(float dTime);
+
+
+	//Some event functions
 
 	void OnWindowClose();
 	void OnWindowResize(int new_width, int new_height);
@@ -25,10 +29,14 @@ private:
 	void OnMouseMove(double x, double y);
 	void OnMouseClick(int button, int action, int mods);
 
+	//Called by connection when a message is received
 	void OnMessageReceive(Message<MSG_TYPES>& msg, uint32_t sender_id) override;
 public:
-	static inline Application* Create() { return &Instance; }
+	//Useless?
+	static inline Application* Get() { return &Instance; }
 private:
+	//We create one static instance of Application so executing 
+	//starts from Application(), not from main() or wWinMain(...)
 	static Application Instance;
 
 	GLFWwindow* m_window;

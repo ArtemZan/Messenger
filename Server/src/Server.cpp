@@ -34,7 +34,7 @@ public:
 		{
 			char buf[100];
 			msg.Read(buf, msg.header.size);
-			Debug::Message("My server recieved a message: ").Add(buf);
+			Debug::Message("My server recieved a message: ", buf);
 			break;
 		}
 		default:

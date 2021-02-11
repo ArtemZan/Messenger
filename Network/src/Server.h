@@ -34,11 +34,11 @@ public:
 		}
 		catch (std::exception& e)
 		{
-			Debug::Message("Failed to run server: \"").Add(e.what()).Add('"');
+			Debug::Message("Failed to run server: \"", e.what(), '"');
 			return false;
 		}
 
-		Debug::Message("Successfully ran server\n").Add(m_acceptor.local_endpoint());
+		Debug::Message("Successfully ran server\n", m_acceptor.local_endpoint());
 		return true;
 	}
 
@@ -142,11 +142,11 @@ private:
 			{
 				if (ec)
 				{
-					Debug::Message("Couldn't connect client ").Add(ec.message());
+					Debug::Message("Couldn't connect client ", ec.message());
 				}
 				else
 				{
-					Debug::Message("New connection: ").Add(socket.remote_endpoint()).Add('\n');
+					Debug::Message("New connection: ", socket.remote_endpoint(), '\n');
 
 					
 					std::shared_ptr<Connection<T>> new_connection = 

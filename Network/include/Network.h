@@ -1,14 +1,19 @@
 #pragma once
 
 #include <iostream>
-#include <functional>
-#include <vector>
-#include <string>
 #include <sstream>
+#include <string>
+
 #include <thread>
-#include <memory>
 #include <mutex>
+#include <memory>
+
 #include <deque>
+#include <vector>
+#include <functional>
+
+#include <stdarg.h>
+
 
 #include "asio.hpp"
 

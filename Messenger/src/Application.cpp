@@ -2,10 +2,6 @@
 #include "Network.h"
 #include "Apllication.h"
 
-void FitImGuiText(const char* text)
-{
-}
-
 Application Application::Instance;
 
 
@@ -45,13 +41,15 @@ void Application::OnUpdate(float dTime)
 			msg.Write(msg_text, strlen(msg_text) + 1);
 			SendToServer(msg);
 			SendToAll(msg);
-			std::this_thread::sleep_for(std::chrono::seconds(1));
 		}
 
 		if (!m_message.empty())
 		{
+			ImGui::PushStyleColor(0, { 0.8f, 1.0f, 0.6f, 1.0f });
 			ImGui::Text("Message from %d: ", m_senderId);
-			ImGui::Text(m_message.c_str());
+			ImGui::SameLine();
+			ImGui::TextWrapped(m_message.c_str());
+			ImGui::PopStyleColor();
 		}
 
 

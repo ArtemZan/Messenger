@@ -1,5 +1,6 @@
 #pragma once
 
+//T is enum of messages types
 template <typename T>
 class Client
 {
@@ -32,7 +33,7 @@ public:
 			asio::ip::tcp::resolver resolver(m_context);
 			asio::ip::tcp::resolver::results_type endpoints = resolver.resolve(host, std::to_string(port));
 
-			Debug::Message("Try to connect to ").Add(host).Add(":").Add(std::to_string(port)).Add("...");
+			Debug::Message("Try to connect to ", host, ":", std::to_string(port), "...");
 
 			m_connection = std::make_unique<Connection<T>>(m_context, asio::ip::tcp::socket(m_context), [this](Sent_message<T>& message) { OnMessageReceive(message.message, message.ID); });
 
@@ -42,7 +43,7 @@ public:
 		}
 		catch (std::exception& e)
 		{
-			std::cout << e.what() << std::endl;
+			Debug::Message(e.what());
 			return false;
 		}
 
@@ -62,28 +63,12 @@ public:
 		m_connection.release();
 	}
 
-	void Update(size_t max_messages_handled = -1)
-	{
-		while (max_messages_handled-- && !m_inMsg.empty())
-		{
-			Sent_message<T> msg = m_inMsg.pop_front();
-
-
-			OnMessageReceive(msg.message);
-		}
-	}
 
 	inline void SendToServer(const Message<T>& msg)							{ Send({msg, SERVER}); }
 
 	inline void SendToClient(const Message<T>& msg, uint32_t receiver_id)	{ Send({msg, receiver_id}); }
 
 	inline void SendToAll(const Message<T>& msg)							{ Send({ msg, ALL_CLIENTS }); }
-
-
-	inline tsque<Sent_message<T>>& Incoming() const { return m_inMsg; }
-
-	//inline uint32_t GetID() const { return m_connection->GetID(); }
-
 private:
 	void Send(const Sent_message<T>& msg)
 	{
@@ -101,5 +86,4 @@ protected:
 	std::unique_ptr<Connection<T>>	m_connection;
 private:
 	std::thread						m_asioThread;
-	tsque<Sent_message<T>>			m_inMsg;
 };

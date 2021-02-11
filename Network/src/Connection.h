@@ -1,5 +1,6 @@
 #pragma once
 
+//T is enum of messages types
 template <typename T>
 class Connection : public std::enable_shared_from_this<Connection<T>>
 {
@@ -57,7 +58,7 @@ public:
 					}
 					else
 					{
-						Debug::Message("Error occured while trying to connect to server").Add(": ").Add(ec.message());
+						Debug::Message("Error occured while trying to connect to server: ", ec.message());
 					}
 				});
 
@@ -92,7 +93,7 @@ private:
 			{
 				if (ec)
 				{
-					Debug::Message("Error occured while trying to read ID: ").Add(ec.message());
+					Debug::Message("Error occured while trying to read ID: ", ec.message());
 					m_socket.close();
 				}
 				else
@@ -109,7 +110,7 @@ private:
 			{
 				if (ec)
 				{
-					Debug::Message("Error occured while trying to read header: ").Add(ec.message());
+					Debug::Message("Error occured while trying to read header: ", ec.message());
 					m_socket.close();
 				}
 				else
@@ -135,7 +136,7 @@ private:
 			{
 				if (ec)
 				{
-					Debug::Message("Error occured while trying to read body: ").Add(ec.message());
+					Debug::Message("Error occured while trying to read body: ", ec.message());
 					m_socket.close();
 				}
 				else
@@ -153,7 +154,7 @@ private:
 			{
 				if (ec)
 				{
-					Debug::Message("Error occured while trying to write ID: ").Add(ec.message());
+					Debug::Message("Error occured while trying to write ID: ", ec.message());
 					m_socket.close();
 				}
 				else
@@ -170,7 +171,7 @@ private:
 			{
 				if (ec)
 				{
-					Debug::Message("Error occured while trying to write header: ").Add(ec.message());
+					Debug::Message("Error occured while trying to write header: ", ec.message());
 					m_socket.close();
 				}
 				else
@@ -196,7 +197,7 @@ private:
 			{
 				if (ec)
 				{
-					Debug::Message("Error occured while trying to write body: ").Add(ec.message());
+					Debug::Message("Error occured while trying to write body: ", ec.message());
 					m_socket.close();
 				}
 				else
@@ -237,7 +238,6 @@ private:
 	asio::io_context&			m_context;
 
 	tsque<Sent_message<T>>		m_outMsg;
-	//tsque<Sent_message<T>>&		m_inMsg;
 	Sent_message<T>				m_handledMsg;
 
 	std::function<void(uint32_t, Sent_message<T>&)> m_serverMsgHandler;
